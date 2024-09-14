@@ -1,0 +1,14 @@
+[project]
+name = "pokemon-vector-semantic-change"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "gensim>=4.3.3",
+    "matplotlib>=3.9.2",
+    "numpy>=1.26.4",
+    "pandas>=2.2.2",
+    "requests>=2.32.3",
+    "scipy>=1.13.1",
+]
