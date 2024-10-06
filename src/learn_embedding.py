@@ -34,16 +34,25 @@ def load_embedding(season, save_dir):
     return model.wv
 
 
-# 他のシーズンの埋め込みを基準に合わせて整合させる関数
-def align_embeddings(base_embedding, target_embedding):
-    # 共通の単語（ポケモン名）を取得
-    common_vocab = list(
-        set(base_embedding.index_to_key) & set(target_embedding.index_to_key)
-    )
+# 全シーズンに共通する語彙を取得する関数
+def get_common_vocab(seasons, save_dir):
+    common_vocab = set()
 
+    for season in seasons:
+        embedding = load_embedding(season, save_dir)
+        if not common_vocab:
+            common_vocab = set(embedding.index_to_key)
+        else:
+            common_vocab &= set(embedding.index_to_key)
+
+    return common_vocab
+
+
+# 他のシーズンの埋め込みを基準に合わせて整合させる関数
+def align_embeddings(common_pokemons, base_embedding, target_embedding):
     # 共通語彙のベクトルを取得
-    base_vectors = np.array([base_embedding[word] for word in common_vocab])
-    target_vectors = np.array([target_embedding[word] for word in common_vocab])
+    base_vectors = np.array([base_embedding[word] for word in common_pokemons])
+    target_vectors = np.array([target_embedding[word] for word in common_pokemons])
 
     # プロクルステス変換で整合
     R, _ = orthogonal_procrustes(target_vectors, base_vectors)
@@ -112,11 +121,18 @@ def main(data_dir, save_dir, max_season, base_season):
 
     # シーズンごとの整合済み埋め込みを保存
     aligned_embeddings = {base_season: base_embedding}
+    common_pokemons = get_common_vocab(seasons, save_dir)
+    # カイリューの変化を観測したいので、common_pokemons から除外
+    common_pokemons.remove("カイリュー")
+
+    print("common_pokemons:", common_pokemons)
 
     for season in seasons:
         if season != base_season:
             target_embedding = load_embedding(season, save_dir)
-            aligned_embedding = align_embeddings(base_embedding, target_embedding)
+            aligned_embedding = align_embeddings(
+                common_pokemons, base_embedding, target_embedding
+            )
             aligned_embeddings[season] = aligned_embedding
 
     # すべてのシーズンの埋め込みを連結
